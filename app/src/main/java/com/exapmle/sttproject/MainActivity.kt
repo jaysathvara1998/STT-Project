@@ -113,9 +113,6 @@ class MainActivity : AppCompatActivity() {
                 MotionEvent.ACTION_DOWN -> {
                     Toast.makeText(this, "down", Toast.LENGTH_LONG).show()
                     speechRecognizer.startListening(speechRecognizerIntent)
-                    name.setText("Listening...")
-                    surname.setText("Listening...")
-                    age.setText("Listening...")
                 }
             }
             false
