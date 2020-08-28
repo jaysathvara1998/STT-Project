@@ -24,12 +24,12 @@ class LoginActivity : AppCompatActivity() {
 
     private fun validate(): Boolean {
         if (etUserName.text.toString().isEmpty()) {
-            etUserName.error = "Enter Username"
+            txtUserName.error = "Enter Username"
             return false
         }
 
         if (etPassword.text.toString().isEmpty()) {
-            etPassword.error = "Enter Password"
+            txtUserName.error = "Enter Password"
             return false
         }
 
