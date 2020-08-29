@@ -9,8 +9,6 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
-import android.view.MotionEvent
-import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -100,23 +98,23 @@ class MainActivity : AppCompatActivity() {
         })
         speechRecognizer.startListening(speechRecognizerIntent)
 
-        button.setOnTouchListener(View.OnTouchListener { view, motionEvent ->
-            when (motionEvent.action) {
-                MotionEvent.ACTION_UP -> {
-                    Toast.makeText(this, "up", Toast.LENGTH_LONG).show()
-                    speechRecognizer.stopListening()
-                    name.hint = "You will see text here.."
-                    age.hint = "You will see text here.."
-                    surname.hint = "You will see text here.."
-                }
-
-                MotionEvent.ACTION_DOWN -> {
-                    Toast.makeText(this, "down", Toast.LENGTH_LONG).show()
-                    speechRecognizer.startListening(speechRecognizerIntent)
-                }
-            }
-            false
-        })
+//        button.setOnTouchListener(View.OnTouchListener { view, motionEvent ->
+//            when (motionEvent.action) {
+//                MotionEvent.ACTION_UP -> {
+//                    Toast.makeText(this, "up", Toast.LENGTH_LONG).show()
+//                    speechRecognizer.stopListening()
+//                    name.hint = "You will see text here.."
+//                    age.hint = "You will see text here.."
+//                    surname.hint = "You will see text here.."
+//                }
+//
+//                MotionEvent.ACTION_DOWN -> {
+//                    Toast.makeText(this, "down", Toast.LENGTH_LONG).show()
+//                    speechRecognizer.startListening(speechRecognizerIntent)
+//                }
+//            }
+//            false
+//        })
     }
 
     private fun checkPermission(): Boolean {
