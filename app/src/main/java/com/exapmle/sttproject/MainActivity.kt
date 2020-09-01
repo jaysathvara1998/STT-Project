@@ -9,6 +9,8 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.util.Log
+import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -21,9 +23,27 @@ class MainActivity : AppCompatActivity() {
 
     private val MY_PERMISSIONS_RECORD_AUDIO = 1
 
+    private val TAG = "ArcoreMeasurement"
+    private val buttonArrayList = ArrayList<String>()
+    private lateinit var toMeasurement: Button
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val buttonArray = resources
+            .getStringArray(R.array.arcore_measurement_buttons)
+
+        buttonArray.map{it->
+            buttonArrayList.add(it)
+        }
+        toMeasurement = findViewById(R.id.to_measurement)
+        toMeasurement.text = buttonArrayList[0]
+        toMeasurement.setOnClickListener {
+            val intent = Intent(this, Measurement::class.java)
+            startActivity(intent)
+        }
+
         requestAudioPermissions()
         name.requestFocus()
     }

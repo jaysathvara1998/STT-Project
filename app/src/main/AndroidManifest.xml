@@ -3,6 +3,11 @@
     package="com.exapmle.sttproject">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature
+        android:name="android.hardware.camera.ar"
+        android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -11,8 +16,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".RegisterActivity"
-            android:theme="@style/NoActionBarTheme"/>
+        <activity android:name=".ARActivity"></activity>
+        <activity
+            android:name=".RegisterActivity"
+            android:theme="@style/NoActionBarTheme" />
         <activity
             android:name=".LoginActivity"
             android:noHistory="true"
@@ -28,6 +35,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity" />
+        <activity android:name=".Measurement" />
+
+        <meta-data
+            android:name="com.google.ar.core"
+            android:value="required" />
     </application>
 
 </manifest>
