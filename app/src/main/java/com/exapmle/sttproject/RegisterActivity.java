@@ -58,7 +58,11 @@ public class RegisterActivity extends AppCompatActivity {
                     UserModel userModel = new UserModel(etName.getText().toString(), etUserName.getText().toString(), etPassword.getText().toString(), key);
                     myRef.child(key).setValue(userModel);
 
-                    startActivity(new Intent(RegisterActivity.this, MainActivity.class));
+                    Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                    intent.putExtra(Constants.USER, userModel);
+                    startActivity(intent);
+
+//                    startActivity(new Intent(RegisterActivity.this, MainActivity.class));
                     Toast.makeText(getApplicationContext(), "Registration Success", Toast.LENGTH_LONG).show();
                 }
             }
