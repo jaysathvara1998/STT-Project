@@ -26,7 +26,7 @@ public class RegisterActivity extends AppCompatActivity {
     TextInputLayout txtPassword;
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference myRef = database.getReference("User");
+    DatabaseReference myRef = database.getReference(Constants.USER);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,13 +42,20 @@ public class RegisterActivity extends AppCompatActivity {
         txtName = findViewById(R.id.txtName);
         txtPassword = findViewById(R.id.txtPassword);
 
+        tvLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+            }
+        });
+
         btnRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (validate()) {
 
                     String key = myRef.push().getKey();
-                    UserModel userModel = new UserModel(etName.getText().toString(), etUserName.getText().toString(), etPassword.getText().toString(),key);
+                    UserModel userModel = new UserModel(etName.getText().toString(), etUserName.getText().toString(), etPassword.getText().toString(), key);
                     myRef.child(key).setValue(userModel);
 
                     startActivity(new Intent(RegisterActivity.this, MainActivity.class));

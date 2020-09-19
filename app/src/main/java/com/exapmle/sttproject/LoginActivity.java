@@ -1,17 +1,23 @@
 package com.exapmle.sttproject;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -22,20 +28,23 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class LoginActivity extends AppCompatActivity {
 
-    Button btnLogin;
     TextView tvRegister;
     TextInputEditText etUserName;
     TextInputEditText etPassword;
     TextInputLayout txtUserName;
     TextInputLayout txtPassword;
+    int MY_PERMISSIONS_RECORD_AUDIO = 1;
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-    DatabaseReference myRef = database.getReference("User");
+    DatabaseReference myRef = database.getReference(Constants.USER);
     ArrayList<UserModel> userList = new ArrayList<>();
 
     @Override
@@ -43,12 +52,28 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        btnLogin = findViewById(R.id.btnLogin);
+//        btnLogin = findViewById(R.id.btnLogin);
         tvRegister = findViewById(R.id.tvRegister);
         etUserName = findViewById(R.id.etUserName);
         etPassword = findViewById(R.id.etPassword);
         txtUserName = findViewById(R.id.txtUserName);
         txtPassword = findViewById(R.id.txtPassword);
+
+        txtUserName.setEndIconOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                requestAudioPermissions(etUserName);
+                etUserName.requestFocus();
+            }
+        });
+
+        txtPassword.setEndIconOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                requestAudioPermissions(etPassword);
+                etPassword.requestFocus();
+            }
+        });
 
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -86,24 +111,6 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-            @Override
-            public void onClick(View view) {
-                if (validate()) {
-                    if (!userList.isEmpty()) {
-                        for (int i = 0; i < userList.size(); i++) {
-                            if (userList.get(i).email.equals(etUserName.getText().toString()) && userList.get(i).password.equals(etPassword.getText().toString())) {
-                                startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                                return;
-                            }
-                        }
-                    }
-                    Toast.makeText(LoginActivity.this, "Invalid username or password", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
         tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -127,5 +134,113 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    private void requestAudioPermissions(TextInputEditText textInputEditText) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    this,
+                    Manifest.permission.RECORD_AUDIO
+            )
+            ) {
+                Toast.makeText(this, "Please grant permissions to record audio", Toast.LENGTH_LONG)
+                        .show();
+                //Give user option to still opt-in the permissions
+            } else {
+                // Show user dialog to grant permission to record audio
+            }
+            ActivityCompat.requestPermissions(
+                    this, new String[]{
+                            Manifest.permission.RECORD_AUDIO
+                    },
+                    MY_PERMISSIONS_RECORD_AUDIO);
+        } else if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+        )
+                == PackageManager.PERMISSION_GRANTED
+        ) {
+            startSpeechToText(textInputEditText);
+        }
+    }
+
+    private void startSpeechToText(TextInputEditText textInputEditText) {
+        SpeechRecognizer speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        speechRecognizerIntent.putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+        );
+        speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+
+        speechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override
+            public void onReadyForSpeech(Bundle bundle) {
+
+            }
+
+            @Override
+            public void onBeginningOfSpeech() {
+
+            }
+
+            @Override
+            public void onRmsChanged(float v) {
+
+            }
+
+            @Override
+            public void onBufferReceived(byte[] bytes) {
+
+            }
+
+            @Override
+            public void onEndOfSpeech() {
+
+            }
+
+            @Override
+            public void onError(int i) {
+
+            }
+
+            @Override
+            public void onResults(Bundle bundle) {
+                ArrayList<String> matches = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                if (matches != null) {
+                    List<String> words = Arrays.asList(matches.get(0).split(" "));
+                    textInputEditText.setText(words.get(0));
+                    speechRecognizer.stopListening();
+
+                    if (!etUserName.getText().toString().isEmpty() && !etPassword.getText().toString().isEmpty()) {
+
+                        if (!userList.isEmpty()) {
+                            for (int i = 0; i < userList.size(); i++) {
+                                if (userList.get(i).name.equalsIgnoreCase(etUserName.getText().toString()) && userList.get(i).password.equalsIgnoreCase(etPassword.getText().toString())) {
+
+                                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                    intent.putExtra(Constants.USER, userList.get(i));
+                                    startActivity(intent);
+                                    return;
+                                }
+                            }
+                        }
+                        Toast.makeText(LoginActivity.this, "Invalid username or password", Toast.LENGTH_SHORT).show();
+
+                    }
+                }
+            }
+
+            @Override
+            public void onPartialResults(Bundle bundle) {
+
+            }
+
+            @Override
+            public void onEvent(int i, Bundle bundle) {
+
+            }
+        });
+        speechRecognizer.startListening(speechRecognizerIntent);
     }
 }

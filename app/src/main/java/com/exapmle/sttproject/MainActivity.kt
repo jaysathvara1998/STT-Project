@@ -8,13 +8,18 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.material.textfield.TextInputEditText
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.android.synthetic.main.activity_main.*
 import java.util.*
 
@@ -26,29 +31,91 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "ArcoreMeasurement"
     private val buttonArrayList = ArrayList<String>()
     private lateinit var toMeasurement: Button
+    private lateinit var textInputEditText: TextInputEditText
+    var userModel: UserModel? = null
 
+    var database = FirebaseDatabase.getInstance()
+    var myRef: DatabaseReference? = null
+    var textToSpeech: TextToSpeech? = null
+    private val question1 = "SWITCH 1 DETAIL:\n" +
+            "1. SWITCH 1 LAST CONDITION IS CRITICAL,\n" +
+            "2. SWITCH 1 HAS METALLIC BODY\n" +
+            "3. SWITCH 1 HAS CROSS BADGE PARTS"
+
+    private val question2 = "Do you need more info ?"
+    private val question3 = "What is the condition of SWITCH 1 ?"
+    private val question4 = "What action you have done ?"
+    private val question5 = "Do you want to provide more info ?"
+    private val question6 = "Do you want to sync inspection data ?"
+    private var question: String? = null
+
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val buttonArray = resources
-            .getStringArray(R.array.arcore_measurement_buttons)
+        val intent = intent
+        userModel = intent.getSerializableExtra(Constants.USER) as UserModel?
+        myRef = database.getReference(Constants.VOICE_RESPONSE).child(userModel!!.getId())
 
-        buttonArray.map{it->
-            buttonArrayList.add(it)
-        }
-        toMeasurement = findViewById(R.id.to_measurement)
-        toMeasurement.text = buttonArrayList[0]
-        toMeasurement.setOnClickListener {
-            val intent = Intent(this, Measurement::class.java)
-            startActivity(intent)
-        }
-
-        requestAudioPermissions()
-        name.requestFocus()
+        textToSpeech = TextToSpeech(this, TextToSpeech.OnInitListener {
+            if (it != TextToSpeech.ERROR) {
+                textToSpeech!!.language = Locale.getDefault()
+                question = question1
+                speakOut(question1)
+            }
+        })
     }
 
-    private fun startSpeechToText() {
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    private fun speakOut(question: String) {
+        textToSpeech!!.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(s: String) {
+                runOnUiThread {
+
+                }
+            }
+
+            override fun onDone(s: String) {
+                runOnUiThread {
+//                    Toast.makeText(applicationContext, "Done ", Toast.LENGTH_SHORT).show()
+                    Log.e("OnDone", s)
+                    when (s) {
+                        question1 -> {
+                            requestAudioPermissions(etSwitch1Detail)
+                        }
+                        question2 -> {
+                            requestAudioPermissions(question2)
+                        }
+                        question3 -> {
+                            requestAudioPermissions(etSwitch1Condition)
+                        }
+                        question4 -> {
+                            requestAudioPermissions(etAction)
+                        }
+                        question5 -> {
+                            requestAudioPermissions(question5)
+                        }
+                        question6 -> {
+                            requestAudioPermissions(question6)
+                        }
+                    }
+                }
+            }
+
+            override fun onError(s: String) {
+                runOnUiThread {
+                    Toast.makeText(applicationContext, "Error ", Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
+        val params = Bundle()
+        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "")
+        textToSpeech!!.speak(question, TextToSpeech.QUEUE_FLUSH, params, question)
+        this.question = question
+    }
+
+    private fun startSpeechToText(textInputEditText: Any) {
         val speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
         val speechRecognizerIntent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
         speechRecognizerIntent.putExtra(
@@ -58,18 +125,33 @@ class MainActivity : AppCompatActivity() {
         speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
 
         speechRecognizer.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(bundle: Bundle) {}
+            override fun onReadyForSpeech(bundle: Bundle) {
+                Log.e("MainActivity", "onReadyForSpeech")
+            }
 
-            override fun onBeginningOfSpeech() {}
+            override fun onBeginningOfSpeech() {
+                Log.e("MainActivity", "onBeginningOfSpeech")
+            }
 
-            override fun onRmsChanged(v: Float) {}
+            override fun onRmsChanged(v: Float) {
+                Log.e("MainActivity", "onRmsChanged")
+            }
 
-            override fun onBufferReceived(bytes: ByteArray) {}
+            override fun onBufferReceived(bytes: ByteArray) {
+                Log.e("MainActivity", "onBufferReceived")
+            }
 
-            override fun onEndOfSpeech() {}
+            override fun onEndOfSpeech() {
+                Log.e("MainActivity", "onEndOfSpeech")
+            }
 
-            override fun onError(i: Int) {}
+            @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+            override fun onError(i: Int) {
+                Log.e("MainActivity", "onError")
+                speakOut(question!!)
+            }
 
+            @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
             override fun onResults(bundle: Bundle) {
                 val matches =
                     bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)//getting all the matches
@@ -77,94 +159,62 @@ class MainActivity : AppCompatActivity() {
                 //displaying the first match
                 if (matches != null) {
                     val words = matches[0].split(' ')
-                    Log.e("MainActivity", "$words")
-                    Log.e("MainActivity Focus", "${name.isFocusable}")
-                    when {
-                        name.isFocusable -> {
-                            name.setText("${words[0]}")
-                            startSpeechToText()
-                            name.isFocusable = false
-                            surname.requestFocus()
-                            return
+                    if (textInputEditText is TextInputEditText) {
+                        textInputEditText.setText("${words[0]}")
+                        speechRecognizer.stopListening()
+                        when (textInputEditText) {
+                            etSwitch1Detail -> {
+                                speakOut(question2)
+                            }
+                            etSwitch1Condition -> {
+                                speakOut(question4)
+                            }
+                            etAction -> {
+                                speakOut(question5)
+                            }
                         }
-                        surname.isFocusable -> {
-                            surname.setText("${words[0]}")
-                            startSpeechToText()
-                            surname.isFocusable = false
-                            age.requestFocus()
-                            return
-                        }
-                        age.isFocusable -> {
-                            age.setText("${words[0]}")
-                            startSpeechToText()
-                            age.isFocusable = false
-                            return
-                        }
-
-                        words.indexOf("submit") != -1 -> {
-                            Toast.makeText(this@MainActivity, "Form submit", Toast.LENGTH_LONG)
-                                .show()
-                            speechRecognizer.stopListening()
+                    } else if (textInputEditText is String) {
+                        if (textInputEditText == question2) {
+                            if (words[0].equals("no", true)) {
+                                speakOut(question3)
+                            }
+                        } else if (textInputEditText == question5) {
+                            if (words[0].equals("no", true)) {
+                                speakOut(question6)
+                            }
+                        } else if (textInputEditText == question6) {
+                            if (words[0].equals("yes", true)) {
+                                val switchDetail = etSwitch1Detail.text.toString()
+                                val switchCondition = etSwitch1Condition.text.toString()
+                                val action = etAction.text.toString()
+                                val id = myRef!!.push().key
+                                val voiceCommand =
+                                    VoiceCommandModel(id, switchDetail, switchCondition, action)
+                                val re = myRef!!.child(id!!).setValue(voiceCommand)
+                                Log.e("OnDatabaseOperation","${re.isSuccessful}")
+                            }
                         }
                     }
-
+                } else {
+                    speakOut(question!!)
                 }
-
             }
 
-            override fun onPartialResults(bundle: Bundle) {}
+            override fun onPartialResults(bundle: Bundle) {
+                Log.e("MainActivity", "onPartialResults")
+            }
 
-            override fun onEvent(i: Int, bundle: Bundle) {}
+            override fun onEvent(i: Int, bundle: Bundle) {
+                Log.e("MainActivity", "onEvent")
+            }
         })
         speechRecognizer.startListening(speechRecognizerIntent)
-
-//        button.setOnTouchListener(View.OnTouchListener { view, motionEvent ->
-//            when (motionEvent.action) {
-//                MotionEvent.ACTION_UP -> {
-//                    Toast.makeText(this, "up", Toast.LENGTH_LONG).show()
-//                    speechRecognizer.stopListening()
-//                    name.hint = "You will see text here.."
-//                    age.hint = "You will see text here.."
-//                    surname.hint = "You will see text here.."
-//                }
-//
-//                MotionEvent.ACTION_DOWN -> {
-//                    Toast.makeText(this, "down", Toast.LENGTH_LONG).show()
-//                    speechRecognizer.startListening(speechRecognizerIntent)
-//                }
-//            }
-//            false
-//        })
     }
 
-    private fun checkPermission(): Boolean {
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            return if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
-                PackageManager.PERMISSION_GRANTED
-            ) {
-                true;
-            } else {
-                if (shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO)) {
-                    Toast.makeText(
-                        this,
-                        "App required access to audio", Toast.LENGTH_SHORT
-                    ).show();
-                }
-                requestPermissions(
-                    arrayOf(Manifest.permission.RECORD_AUDIO),
-                    MY_PERMISSIONS_RECORD_AUDIO
-                )
-                false;
-            }
-
-        } else {
-            // put your code for Version < Marshmallow
-            return true;
+    private fun requestAudioPermissions(textInputEditText: Any) {
+        if (textInputEditText is TextInputEditText) {
+            this.textInputEditText = textInputEditText
         }
-    }
-
-    private fun requestAudioPermissions() {
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.RECORD_AUDIO
@@ -197,7 +247,7 @@ class MainActivity : AppCompatActivity() {
             )
             == PackageManager.PERMISSION_GRANTED
         ) {
-            startSpeechToText()
+            startSpeechToText(textInputEditText)
         }
     }
 
@@ -209,13 +259,9 @@ class MainActivity : AppCompatActivity() {
     ) {
         when (requestCode) {
             MY_PERMISSIONS_RECORD_AUDIO -> {
-                if (grantResults.size > 0
-                    && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                ) {
-                    startSpeechToText()
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    startSpeechToText(textInputEditText)
                 } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
                     Toast.makeText(this, "Permissions Denied to record audio", Toast.LENGTH_LONG)
                         .show()
                 }

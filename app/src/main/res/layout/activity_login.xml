@@ -19,12 +19,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="UserName"
+            app:endIconDrawable="@android:drawable/ic_btn_speak_now"
+            app:endIconMode="custom"
             app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etUserName"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:editable="false" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -33,25 +36,25 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
             android:hint="Password"
-            app:endIconMode="password_toggle"
+            app:endIconDrawable="@android:drawable/ic_btn_speak_now"
+            app:endIconMode="custom"
             app:errorEnabled="true">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPassword" />
+                android:editable="false" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
-        <Button
-            android:id="@+id/btnLogin"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:text="Login" />
+        <!--        <Button-->
+        <!--            android:id="@+id/btnLogin"-->
+        <!--            android:layout_width="match_parent"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:layout_marginTop="10dp"-->
+        <!--            android:text="Login" />-->
 
         <TextView
             android:id="@+id/tvRegister"

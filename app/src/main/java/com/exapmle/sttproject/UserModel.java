@@ -1,6 +1,8 @@
 package com.exapmle.sttproject;
 
-public class UserModel {
+import java.io.Serializable;
+
+public class UserModel implements Serializable {
     public UserModel(String name, String email, String password, String id) {
         this.name = name;
         this.email = email;

@@ -5,4 +5,6 @@ object Constants{
     const val multipleDistanceTableHeight = 300
 
     const val arrowViewSize = 45
+    const val USER = "User"
+    const val VOICE_RESPONSE = "VoiceResponse"
 }
