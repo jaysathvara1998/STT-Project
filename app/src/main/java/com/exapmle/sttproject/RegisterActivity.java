@@ -58,7 +58,7 @@ public class RegisterActivity extends AppCompatActivity {
                     UserModel userModel = new UserModel(etName.getText().toString(), etUserName.getText().toString(), etPassword.getText().toString(), key);
                     myRef.child(key).setValue(userModel);
 
-                    Intent intent = new Intent(RegisterActivity.this, MainActivity.class);
+                    Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
                     intent.putExtra(Constants.USER, userModel);
                     startActivity(intent);
 

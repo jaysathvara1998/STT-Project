@@ -2,15 +2,9 @@ package com.exapmle.sttproject;
 
 public class VoiceCommandModel {
     String responseId;
-
-    public VoiceCommandModel(String responseId, String switchDetail, String switchCondition, String action) {
-        this.responseId = responseId;
-        this.switchDetail = switchDetail;
-        this.switchCondition = switchCondition;
-        this.action = action;
-    }
-
     String switchDetail;
+    String switchCondition;
+    String action;
 
     public String getResponseId() {
         return responseId;
@@ -44,6 +38,21 @@ public class VoiceCommandModel {
         this.action = action;
     }
 
-    String switchCondition;
-    String action;
+    public String getPoleHeight() {
+        return poleHeight;
+    }
+
+    public void setPoleHeight(String poleHeight) {
+        this.poleHeight = poleHeight;
+    }
+
+    String poleHeight;
+
+    public VoiceCommandModel(String responseId, String switchDetail, String switchCondition, String action, String poleHeight) {
+        this.responseId = responseId;
+        this.switchDetail = switchDetail;
+        this.switchCondition = switchCondition;
+        this.action = action;
+        this.poleHeight = poleHeight;
+    }
 }

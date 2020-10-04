@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -41,11 +43,17 @@ public class LoginActivity extends AppCompatActivity {
     TextInputEditText etPassword;
     TextInputLayout txtUserName;
     TextInputLayout txtPassword;
+    TextToSpeech textToSpeech;
     int MY_PERMISSIONS_RECORD_AUDIO = 1;
 
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference myRef = database.getReference(Constants.USER);
     ArrayList<UserModel> userList = new ArrayList<>();
+    String userNameQuestion = "Enter username";
+    String passwordQuestion = "Enter password";
+    String submit = "Do you want to submit";
+    String invalidCredentials = "Invalid username or password";
+    String question;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,20 +66,15 @@ public class LoginActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         txtUserName = findViewById(R.id.txtUserName);
         txtPassword = findViewById(R.id.txtPassword);
-
-        txtUserName.setEndIconOnClickListener(new View.OnClickListener() {
+        textToSpeech = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
-            public void onClick(View view) {
-                requestAudioPermissions(etUserName);
-                etUserName.requestFocus();
-            }
-        });
-
-        txtPassword.setEndIconOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                requestAudioPermissions(etPassword);
-                etPassword.requestFocus();
+            public void onInit(int i) {
+                if (i != TextToSpeech.ERROR) {
+                    textToSpeech.setLanguage(Locale.getDefault());
+                    question = userNameQuestion;
+                    speakOut(userNameQuestion);
+                }
             }
         });
 
@@ -119,6 +122,48 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    private void speakOut(String question) {
+        textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+            @Override
+            public void onStart(String s) {
+
+            }
+
+            @Override
+            public void onDone(String s) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (s.equalsIgnoreCase(userNameQuestion)) {
+                            requestAudioPermissions(etUserName);
+                            etUserName.requestFocus();
+                        }
+                        if (s.equalsIgnoreCase(passwordQuestion)) {
+                            requestAudioPermissions(etPassword);
+                            etPassword.requestFocus();
+                        }
+                        if (s.equalsIgnoreCase(submit)) {
+                            requestAudioPermissions(submit);
+                        }
+                        if (s.equalsIgnoreCase(invalidCredentials)) {
+                            speakOut(userNameQuestion);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onError(String s) {
+
+            }
+        });
+        Bundle params = new Bundle();
+        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, "");
+        textToSpeech.speak(question, TextToSpeech.QUEUE_FLUSH, params, question);
+        this.question = question;
+    }
+
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private Boolean validate() {
         if (Objects.requireNonNull(etUserName.getText()).toString().isEmpty()) {
@@ -136,7 +181,7 @@ public class LoginActivity extends AppCompatActivity {
         return true;
     }
 
-    private void requestAudioPermissions(TextInputEditText textInputEditText) {
+    private void requestAudioPermissions(Object textInputEditText) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(
                     this,
@@ -164,7 +209,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void startSpeechToText(TextInputEditText textInputEditText) {
+    private void startSpeechToText(Object textInputEditText) {
         SpeechRecognizer speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         speechRecognizerIntent.putExtra(
@@ -199,34 +244,59 @@ public class LoginActivity extends AppCompatActivity {
 
             }
 
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onError(int i) {
-
+                if (question.equalsIgnoreCase(invalidCredentials)) {
+                    speakOut(userNameQuestion);
+                } else {
+                    speakOut(question);
+                }
             }
 
+            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
             @Override
             public void onResults(Bundle bundle) {
                 ArrayList<String> matches = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                 if (matches != null) {
                     List<String> words = Arrays.asList(matches.get(0).split(" "));
-                    textInputEditText.setText(words.get(0));
-                    speechRecognizer.stopListening();
+                    if (textInputEditText instanceof TextInputEditText) {
+                        ((TextInputEditText) textInputEditText).setText(words.get(0));
+                        speechRecognizer.stopListening();
 
-                    if (!etUserName.getText().toString().isEmpty() && !etPassword.getText().toString().isEmpty()) {
+                        if (textInputEditText == etUserName) {
+                            speakOut(passwordQuestion);
+                        }
+                        if (textInputEditText == etPassword) {
+                            speakOut(submit);
+                        }
+                    } else if (textInputEditText instanceof String) {
+                        if (textInputEditText == submit) {
+                            if (words.get(0).equalsIgnoreCase("yes")) {
+                                if (!etUserName.getText().toString().isEmpty() && !etPassword.getText().toString().isEmpty()) {
 
-                        if (!userList.isEmpty()) {
-                            for (int i = 0; i < userList.size(); i++) {
-                                if (userList.get(i).name.equalsIgnoreCase(etUserName.getText().toString()) && userList.get(i).password.equalsIgnoreCase(etPassword.getText().toString())) {
+                                    if (!userList.isEmpty()) {
+                                        for (int i = 0; i < userList.size(); i++) {
+                                            if (userList.get(i).name.equalsIgnoreCase(etUserName.getText().toString()) && userList.get(i).password.equalsIgnoreCase(etPassword.getText().toString())) {
 
-                                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                                    intent.putExtra(Constants.USER, userList.get(i));
-                                    startActivity(intent);
-                                    return;
+                                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                                intent.putExtra(Constants.USER, userList.get(i));
+                                                startActivity(intent);
+                                                return;
+                                            }
+                                        }
+                                    }
+                                    speakOut(invalidCredentials);
+                                    Toast.makeText(LoginActivity.this, "Invalid username or password", Toast.LENGTH_SHORT).show();
                                 }
+                            } else {
+                                speakOut(submit);
                             }
                         }
-                        Toast.makeText(LoginActivity.this, "Invalid username or password", Toast.LENGTH_SHORT).show();
 
+                        if (textInputEditText == invalidCredentials) {
+                            speakOut(userNameQuestion);
+                        }
                     }
                 }
             }

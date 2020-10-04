@@ -11,7 +11,6 @@ import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
-import android.widget.Button
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -28,25 +27,33 @@ class MainActivity : AppCompatActivity() {
 
     private val MY_PERMISSIONS_RECORD_AUDIO = 1
 
-    private val TAG = "ArcoreMeasurement"
-    private val buttonArrayList = ArrayList<String>()
-    private lateinit var toMeasurement: Button
     private lateinit var textInputEditText: TextInputEditText
     var userModel: UserModel? = null
 
     var database = FirebaseDatabase.getInstance()
     var myRef: DatabaseReference? = null
     var textToSpeech: TextToSpeech? = null
-    private val question1 = "SWITCH 1 DETAIL:\n" +
-            "1. SWITCH 1 LAST CONDITION IS CRITICAL,\n" +
-            "2. SWITCH 1 HAS METALLIC BODY\n" +
-            "3. SWITCH 1 HAS CROSS BADGE PARTS"
+
+    //    private val question1 = "SWITCH 1 DETAIL:\n" +
+//            "1. SWITCH 1 LAST CONDITION IS CRITICAL,\n" +
+//            "2. SWITCH 1 HAS METALLIC BODY\n" +
+//            "3. SWITCH 1 HAS CROSS BADGE PARTS"
+    private val question1 = "q1"
+
+    private val chooseValidOption = "Please choose valid option"
+
+    val ans1 = "SWITCH 1 LAST CONDITION IS CRITICAL"
+    val ans2 = "SWITCH 1 HAS METALLIC BODY"
+    val ans3 = "SWITCH 1 HAS CROSS BADGE PARTS"
 
     private val question2 = "Do you need more info ?"
     private val question3 = "What is the condition of SWITCH 1 ?"
     private val question4 = "What action you have done ?"
+    private val question7 = "What is the height of the pole ?"
     private val question5 = "Do you want to provide more info ?"
     private val question6 = "Do you want to sync inspection data ?"
+    private val syncDone = "Syncing done"
+    private val syncFail = "Syncing Fail"
     private var question: String? = null
 
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
@@ -67,6 +74,11 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        textToSpeech!!.shutdown()
+    }
+
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     private fun speakOut(question: String) {
         textToSpeech!!.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -84,6 +96,9 @@ class MainActivity : AppCompatActivity() {
                         question1 -> {
                             requestAudioPermissions(etSwitch1Detail)
                         }
+                        chooseValidOption -> {
+                            requestAudioPermissions(etSwitch1Detail)
+                        }
                         question2 -> {
                             requestAudioPermissions(question2)
                         }
@@ -99,6 +114,10 @@ class MainActivity : AppCompatActivity() {
                         question6 -> {
                             requestAudioPermissions(question6)
                         }
+                        question7 -> {
+                            requestAudioPermissions(etPoleHeight)
+                        }
+
                     }
                 }
             }
@@ -160,16 +179,42 @@ class MainActivity : AppCompatActivity() {
                 if (matches != null) {
                     val words = matches[0].split(' ')
                     if (textInputEditText is TextInputEditText) {
-                        textInputEditText.setText("${words[0]}")
-                        speechRecognizer.stopListening()
+                        if (question == question1) {
+                            speechRecognizer.stopListening()
+                        } else {
+                            textInputEditText.setText("${words[0]}")
+                            speechRecognizer.stopListening()
+                        }
                         when (textInputEditText) {
                             etSwitch1Detail -> {
-                                speakOut(question2)
+                                if (words[0].equals("1", true) || words[0].equals("one", true)) {
+                                    textInputEditText.setText(ans1)
+                                    speakOut(question2)
+                                } else if (words[0].equals("2", true) || words[0].equals(
+                                        "two",
+                                        true
+                                    )
+                                ) {
+                                    speakOut(question2)
+                                    textInputEditText.setText(ans2)
+                                } else if (words[0].equals("3", true) || words[0].equals(
+                                        "three",
+                                        true
+                                    )
+                                ) {
+                                    speakOut(question2)
+                                    textInputEditText.setText(ans3)
+                                } else {
+                                    speakOut(chooseValidOption)
+                                }
                             }
                             etSwitch1Condition -> {
                                 speakOut(question4)
                             }
                             etAction -> {
+                                speakOut(question7)
+                            }
+                            etPoleHeight -> {
                                 speakOut(question5)
                             }
                         }
@@ -177,21 +222,37 @@ class MainActivity : AppCompatActivity() {
                         if (textInputEditText == question2) {
                             if (words[0].equals("no", true)) {
                                 speakOut(question3)
+                            } else {
+                                speakOut(question3)
                             }
                         } else if (textInputEditText == question5) {
                             if (words[0].equals("no", true)) {
                                 speakOut(question6)
+                            } else {
+                                speakOut(question6)
                             }
                         } else if (textInputEditText == question6) {
-                            if (words[0].equals("yes", true)) {
-                                val switchDetail = etSwitch1Detail.text.toString()
-                                val switchCondition = etSwitch1Condition.text.toString()
-                                val action = etAction.text.toString()
-                                val id = myRef!!.push().key
-                                val voiceCommand =
-                                    VoiceCommandModel(id, switchDetail, switchCondition, action)
-                                val re = myRef!!.child(id!!).setValue(voiceCommand)
-                                Log.e("OnDatabaseOperation","${re.isSuccessful}")
+                            val wordArray = listOf<String>("Yash", "yes", "yas", "YS")
+                            for (word in words) {
+                                if (word.equals("yes", true)) {
+                                    val switchDetail = etSwitch1Detail.text.toString()
+                                    val switchCondition = etSwitch1Condition.text.toString()
+                                    val action = etAction.text.toString()
+                                    val poleHeight = etPoleHeight.text.toString()
+                                    val id = myRef!!.push().key
+                                    val voiceCommand =
+                                        VoiceCommandModel(
+                                            id,
+                                            switchDetail,
+                                            switchCondition,
+                                            action,
+                                            poleHeight
+                                        )
+                                    val re = myRef!!.child(id!!).setValue(voiceCommand)
+                                    speakOut(syncDone)
+                                    Log.e("OnDatabaseOperation", "${re.isSuccessful}")
+                                    return
+                                }
                             }
                         }
                     }
