@@ -117,6 +117,7 @@ public class LoginActivity extends AppCompatActivity {
         tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                textToSpeech.stop();
                 startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
             }
         });
