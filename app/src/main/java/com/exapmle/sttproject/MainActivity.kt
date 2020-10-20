@@ -34,11 +34,11 @@ class MainActivity : AppCompatActivity() {
     var myRef: DatabaseReference? = null
     var textToSpeech: TextToSpeech? = null
 
-    //    private val question1 = "SWITCH 1 DETAIL:\n" +
-//            "1. SWITCH 1 LAST CONDITION IS CRITICAL,\n" +
-//            "2. SWITCH 1 HAS METALLIC BODY\n" +
-//            "3. SWITCH 1 HAS CROSS BADGE PARTS"
-    private val question1 = "q1"
+    private val question1 = "SWITCH 1 DETAIL:\n" +
+            "1. SWITCH 1 LAST CONDITION IS CRITICAL,\n" +
+            "2. SWITCH 1 HAS METALLIC BODY\n" +
+            "3. SWITCH 1 HAS CROSS BADGE PARTS"
+//    private val question1 = "q1"
 
     private val chooseValidOption = "Please choose valid option"
 

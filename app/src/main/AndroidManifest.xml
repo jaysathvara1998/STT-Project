@@ -23,6 +23,8 @@
             android:name=".LoginActivity"
             android:noHistory="true"
             android:theme="@style/NoActionBarTheme" />
+        <activity android:name=".AdminDashboardActivity" />
+        <activity android:name=".ResponseActivity"/>
         <activity
             android:name=".SplashActivity"
             android:noHistory="true"

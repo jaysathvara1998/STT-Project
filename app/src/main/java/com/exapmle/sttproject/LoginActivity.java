@@ -274,11 +274,19 @@ public class LoginActivity extends AppCompatActivity {
                     } else if (textInputEditText instanceof String) {
                         if (textInputEditText == submit) {
                             if (words.get(0).equalsIgnoreCase("yes")) {
-                                if (!etUserName.getText().toString().isEmpty() && !etPassword.getText().toString().isEmpty()) {
+                                String userName = etUserName.getText().toString();
+                                String password = etPassword.getText().toString();
+                                if (!userName.isEmpty() && !password.isEmpty()) {
+
+                                    if (userName.equalsIgnoreCase("admin") && password.equalsIgnoreCase("admin")) {
+                                        Intent intent = new Intent(LoginActivity.this, AdminDashboardActivity.class);
+                                        startActivity(intent);
+                                        return;
+                                    }
 
                                     if (!userList.isEmpty()) {
                                         for (int i = 0; i < userList.size(); i++) {
-                                            if (userList.get(i).name.equalsIgnoreCase(etUserName.getText().toString()) && userList.get(i).password.equalsIgnoreCase(etPassword.getText().toString())) {
+                                            if (userList.get(i).name.equalsIgnoreCase(userName) && userList.get(i).password.equalsIgnoreCase(password)) {
 
                                                 Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                                                 intent.putExtra(Constants.USER, userList.get(i));
